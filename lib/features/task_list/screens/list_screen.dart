@@ -1,48 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_flow/features/task_list/provider/item_provider.dart';
 import 'package:habit_flow/features/task_list/widgets/empty_content.dart';
 import 'package:habit_flow/features/task_list/widgets/item_list.dart';
-import 'package:hive_ce/hive.dart';
-
-final itemProvider = NotifierProvider<ItemNotifier, List<String>>(
-  ItemNotifier.new,
-);
-
-class ItemNotifier extends Notifier<List<String>> {
-  late final Box box;
-
-  @override
-  List<String> build() {
-    box = Hive.box('HabitFlowBox');
-
-    // Listen to changes in Hive box
-    box.watch(key: 'TODO_LIST').listen((_) {
-      state = box.get('TODO_LIST', defaultValue: <String>[]).cast<String>();
-    });
-
-    // Initial state
-    return box.get('TODO_LIST', defaultValue: <String>[]).cast<String>();
-  }
-
-  void addItem(String item) {
-    final updatedList = [...state, item];
-    box.put('TODO_LIST', updatedList);
-    state = updatedList;
-  }
-
-  void editItem(int index, String newItem) {
-    final updatedList = [...state];
-    updatedList[index] = newItem;
-    box.put('TODO_LIST', updatedList);
-    state = updatedList;
-  }
-
-  void deleteItem(int index) {
-    final updatedList = [...state]..removeAt(index);
-    box.put('TODO_LIST', updatedList);
-    state = updatedList;
-  }
-}
 
 class ListScreen extends ConsumerWidget {
   ListScreen({super.key});
@@ -84,7 +44,7 @@ class ListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final _items = ref.watch(itemProvider);
+    final items = ref.watch(itemProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Habit Flow')),
@@ -93,10 +53,10 @@ class ListScreen extends ConsumerWidget {
         child: Column(
           children: [
             Expanded(
-              child: _items.isEmpty
+              child: items.isEmpty
                   ? const EmptyContent()
                   : ItemList(
-                      items: _items,
+                      items: items,
                       onEdit: (index, newItem) {
                         ref
                             .read(itemProvider.notifier)
